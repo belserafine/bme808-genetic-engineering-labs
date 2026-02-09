@@ -1,0 +1,166 @@
+# BME808 Lab 2
+# Belinda Serafine
+# search ### to go between questions
+
+import re
+import statistics
+
+### QUESTION 1
+f_plasmo = f"/Users/belindaserafine/Documents/School/BME808/Lab2/Plasmodium Falciparum Sodium Channel.txt"
+
+def takesequence(f):
+    with open(f, "r") as file: # open the file and read it
+        seq = ""
+        content = file.read() # read entire file into content
+        lines = content.split("\n") # split file contents by line
+        lines = lines[1:]
+        for line in lines:
+            seq += line
+        return seq
+
+def count_nucleotides(sequence):
+    print("How many total nucleotides are in the sequence?", len(sequence))
+    print("How many A, C, G, and T nucleotides are in the sequence?")
+    a_count = sequence.count("A")
+    c_count = sequence.count("C")
+    g_count = sequence.count("G")
+    t_count = sequence.count("T")
+    print(f"    A: {a_count}, C: {c_count}, G: {g_count}, T: {t_count}")
+    return a_count, c_count, g_count, t_count
+
+print("Question 1")
+seq1 = takesequence(f_plasmo)
+seq1_count = count_nucleotides(seq1)
+
+### QUESTION 2
+print("\nQuestion 2")
+f_human = f"/Users/belindaserafine/Documents/School/BME808/Lab2/sodium voltage-gated channel alpha subunit 5.fasta"
+seq2 = takesequence(f_human)
+seq2_count = count_nucleotides(seq2)
+
+### QUESTION 3
+print("\nQuestion 3")
+print("What is the A/T proportion in the Plasmodium Falciparum gene?", round(seq1_count[0]/seq1_count[3], 2))
+print("What is the A/T proportion in the Homo-Sapiens gene?", round(seq2_count[0]/seq2_count[3],2))
+
+### QUESTION 4
+def count_cxt(sequence):
+    cat_count = sequence.count("CAT")
+    cct_count = sequence.count("CCT")
+    cgt_count = sequence.count("CGT")
+    cxt_count = len(re.findall(r'C[AGCT]T', sequence))
+    print("CAT: ", cat_count)
+    print("CCT: ", cct_count)
+    print("CGT: ", cgt_count)
+    print("CXT: ", cxt_count)
+    return cat_count, cct_count, cgt_count, cct_count
+
+print("\nQuestion 4")
+print("Report the number of CAT, CCT, CGT, CCT, and CxT codons in the sequence.")
+seq2_count_cxt = count_cxt(seq2)
+
+### QUESTION 5
+
+#codon table taken from https://gist.github.com/juanfal/09d7fb53bd367742127e17284b9c47bf
+codontab = {
+    'TCA': 'S',    # Serina
+    'TCC': 'S',    # Serina
+    'TCG': 'S',    # Serina
+    'TCT': 'S',    # Serina
+    'TTC': 'F',    # Fenilalanina
+    'TTT': 'F',    # Fenilalanina
+    'TTA': 'L',    # Leucina
+    'TTG': 'L',    # Leucina
+    'TAC': 'Y',    # Tirosina
+    'TAT': 'Y',    # Tirosina
+    'TAA': '*',    # Stop
+    'TAG': '*',    # Stop
+    'TGC': 'C',    # Cisteina
+    'TGT': 'C',    # Cisteina
+    'TGA': '*',    # Stop
+    'TGG': 'W',    # Triptofano
+    'CTA': 'L',    # Leucina
+    'CTC': 'L',    # Leucina
+    'CTG': 'L',    # Leucina
+    'CTT': 'L',    # Leucina
+    'CCA': 'P',    # Prolina
+    'CCC': 'P',    # Prolina
+    'CCG': 'P',    # Prolina
+    'CCT': 'P',    # Prolina
+    'CAC': 'H',    # Histidina
+    'CAT': 'H',    # Histidina
+    'CAA': 'Q',    # Glutamina
+    'CAG': 'Q',    # Glutamina
+    'CGA': 'R',    # Arginina
+    'CGC': 'R',    # Arginina
+    'CGG': 'R',    # Arginina
+    'CGT': 'R',    # Arginina
+    'ATA': 'I',    # Isoleucina
+    'ATC': 'I',    # Isoleucina
+    'ATT': 'I',    # Isoleucina
+    'ATG': 'M',    # Methionina
+    'ACA': 'T',    # Treonina
+    'ACC': 'T',    # Treonina
+    'ACG': 'T',    # Treonina
+    'ACT': 'T',    # Treonina
+    'AAC': 'N',    # Asparagina
+    'AAT': 'N',    # Asparagina
+    'AAA': 'K',    # Lisina
+    'AAG': 'K',    # Lisina
+    'AGC': 'S',    # Serina
+    'AGT': 'S',    # Serina
+    'AGA': 'R',    # Arginina
+    'AGG': 'R',    # Arginina
+    'GTA': 'V',    # Valina
+    'GTC': 'V',    # Valina
+    'GTG': 'V',    # Valina
+    'GTT': 'V',    # Valina
+    'GCA': 'A',    # Alanina
+    'GCC': 'A',    # Alanina
+    'GCG': 'A',    # Alanina
+    'GCT': 'A',    # Alanina
+    'GAC': 'D',    # Acido Aspartico
+    'GAT': 'D',    # Acido Aspartico
+    'GAA': 'E',    # Acido Glutamico
+    'GAG': 'E',    # Acido Glutamico
+    'GGA': 'G',    # Glicina
+    'GGC': 'G',    # Glicina
+    'GGG': 'G',    # Glicina
+    'GGT': 'G'     # Glicina
+}
+
+def translation(sequence):
+    protein = []
+    for i in range(0, len(sequence) - 2, 3): #ensure doesnt include last 2 nucleotides as an incomplete codon
+        codon = sequence[i:i + 3]
+        protein.append(codontab.get(codon)) #get aa from dictionary
+    return ''.join(protein)
+
+print("\nQuestion 5")
+seq2_protein = translation(seq2)
+print(seq2_protein[:200]) # this is approx 3-4 lines in word doc
+
+### QUESTION 6
+print("\nQuestion 6")
+
+def mode_aa(protein):
+    return statistics.mode(protein)
+
+def mode_aa_count_codon(sequence, protein):
+    aa = mode_aa(protein) #get mode aa
+
+    # list codons that can translate to mode aa
+    codons = []
+    for key, value in codontab.items():
+        if value == aa:
+            codons.append(key)
+    # print(codons) #to check
+    unique_codons = set()
+    for i in range(0, len(sequence) - 2, 3):
+        codon = sequence[i:i + 3]
+        if codon in codons:
+            unique_codons.add(codon)
+    return len(unique_codons)
+
+print("What is the most common amino acid in the translated amino acid chain?", mode_aa(seq2_protein))
+print("How many of each unique codon contribute to the most common amino acid?", mode_aa_count_codon(seq2, seq2_protein))
