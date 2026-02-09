@@ -1,0 +1,150 @@
+# BME808 Lab 3
+# Belinda Serafine
+# search ### to go between questions
+
+import numpy as np
+
+### QUESTION 1
+print("QUESTION 1")
+def longestoverlap(s1,s2):
+    # get length of s1 and s2 (number of characters in the string)
+    l1 = len(s1)
+    l2 = len(s2)
+    # find the lower value between the two, which give us
+    # the number of characters in the shorter sequence
+    n = min(l1,l2)
+
+    # while the shorter length is greater than 0
+    while n > 0:
+        # check if suffix of s1 (suffix starts from (l1-n)th character until end of s1)
+        # matches prefix of s2 (start of s2 up to nth character)
+        if s1[l1 - n:l1] == s2[0:n]:
+            # if true, return the now_node value of n, which is the number of largest overlap
+            return n
+        # otherwise, subtract 1 from n, to shorten the overlap and repeat the comparison
+        n=n-1
+    # if no matches found, the longest overlap is 0
+    return 0
+
+# define the two sequences
+s1 = 'TGACGAGTT'
+s2 = 'AGTTAATGC'
+
+# call the function on the sequences
+n1 = longestoverlap(s1,s2)
+
+print('the largest overlap for',s1,s2,'is',n1)
+
+### QUESTION 2
+print("\nQUESTION 2")
+
+# open, read, and print file with fragments as strings
+file1 = open(f"/Users/belindaserafine/Documents/School/BME808/Lab3/exercise2.txt", "r")
+alllines = file1.read()
+print(alllines)
+
+# split lines by newline
+lines = alllines.split('\n')
+# remove the last item in list, which is a whitespace here
+lines.pop()
+
+# print the fragments and the number of fragments
+print(lines)
+n = len(lines)
+print('number of sequences:', n)
+
+# initialize zeros of size nxn
+overlap = [[0 for i in range(n)] for j in range(n)]
+
+# fill overlap matrix
+for i in range(n):
+      for j in range(n):
+          if i != j: # avoid self comparison, diagonal will be 0
+            overlap[i][j] = overlap[j][i]
+            current_overlap = longestoverlap(lines[i],lines[j])
+            overlap[i][j] = current_overlap
+
+print("\nOverlap matrix\n", np.matrix(overlap)) # print the overlap matrix
+
+### QUESTION 3
+
+print("\nQUESTION 3")
+
+def greedy(matrix):
+    matrix = matrix.copy() # avoid destroying original
+
+    # initialize path array
+    path = np.zeros(n)
+
+    for i in range(n):
+        largest_overlap = 0
+        max_j = 0
+
+        # find max j in row i
+        for j in range(n):
+            if matrix[i][j] > largest_overlap:
+                largest_overlap = matrix[i][j]
+                max_j = j
+
+        # if nothing found, set -1
+        if max_j == 0:
+            path[i] = -1
+            continue
+
+        # choose index of largest overlap as now_node path successor
+        path[i] = max_j
+
+        # zero out row i except chosen column
+        for k in range(n):
+            if k == max_j:
+                continue
+            matrix[i][k] = 0
+
+        # zero out column max_j except chosen row
+        for k in range(n):
+            if k == i:
+                continue
+            matrix[k][max_j] = 0
+    return path, matrix
+
+nodes = list(range(n))
+greedypath, greedyoverlap = greedy(overlap)
+
+print(nodes)
+print(greedypath)
+
+### QUESTION 4
+print("\nQUESTION 4")
+
+# create copy to avoid destroying original lines
+fragments = list(lines)
+
+# starting node is one that is not in path array
+start = 0
+for i in range(len(nodes)):
+    if nodes[i] not in greedypath:
+        start = nodes[i]
+    else:
+        continue
+
+# print starting fragment
+print(f"{start} {fragments[0]}")
+
+# variables for loop
+now_node = int(start)
+next_node = 0
+whitespace = 0
+
+# print nodes except if path is -1
+for i in range(len(nodes)):
+    if greedypath[now_node] != -1:
+        # get next node using now_node which is the index for the next node in greedy path
+        next_node = int(greedypath[now_node])
+        # get overlap length using longestoverlap function
+        overlap_len = longestoverlap(fragments[now_node], fragments[next_node])
+        # set whitespace as length of current indent and length of non overlapping fragment
+        whitespace = whitespace + len(fragments[now_node]) - overlap_len
+        # print node number, whitespace, fragment, and overlap length
+        print(f"{next_node} {" " * whitespace}{fragments[next_node]} ({overlap_len})")
+    # next node is set as the current node for next iteration
+    now_node = next_node
