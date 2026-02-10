@@ -1,0 +1,165 @@
+# BME808 Lab 4
+# Belinda Serafine
+
+### Needleman-Wunsch Algorithm
+# as outlined in Exploring Bioinformatics, p. 54
+# Goal: Determine the optimal global alignment of two sequences
+# Input: Two sequences
+# Output: Best, global alignment(s) of two input sequences
+
+# Function to create directional string
+def buildDirectionalString(matrix, N, M) :
+    dstring = ""
+    currentRow = N
+    currentCol = M
+
+    while currentRow != 0 or currentCol != 0: # loop while we are not at matrix[0][0]
+
+        if currentRow == 0:
+            dstring = dstring + "H" # gap in first sequence
+            currentCol -= 1 # go left
+
+        elif currentCol == 0:
+            dstring = dstring + "V" # gap in second sequence
+            currentRow -= 1 # go up
+
+        # check left
+        elif matrix[currentRow][currentCol-1] + gap == matrix[currentRow][currentCol]:
+            dstring = dstring + "H"
+            currentCol -= 1 # go left
+
+        # check up
+        elif matrix[currentRow-1][currentCol] + gap == matrix[currentRow][currentCol]:
+            dstring = dstring + "V"
+            currentRow -= 1 # go up
+
+        # otherwise it has to be diagonal
+        else:
+            dstring = dstring + "D"
+            currentCol -= 1
+            currentRow -= 1
+    return dstring
+
+# path names
+path1 = "/Users/belindaserafine/Documents/School/BME808/Lab4/sMouseLDL.txt"
+path2 = "/Users/belindaserafine/Documents/School/BME808/Lab4/sHumanLDL.txt"
+
+# Initialization
+# Input the two sequences: s1 and s2
+infile1 = open(path1, "r")
+infile2 = open(path2, "r")
+s1 = ""
+
+firstLine = infile1.readline()
+for line in infile1 :
+    line = line.replace("\n", "")
+    s1 = s1 + line
+s1 = s1.upper()
+s1 = s1[1900:2045] # subsection M2
+print("s1 = ", s1)
+print("length of s1 =", len(s1))
+
+s2 = ""
+firstLine = infile2.readline()
+for line in infile2 :
+    line = line.replace("\n", "")
+    s2 = s2 + line
+s2 = s2.upper()
+s2 = s2[21:166] # subsection H2
+print("s2 = ", s2)
+print("length of s2 =", len(s2))
+
+# N = length of s1
+N = len(s1)
+# M = length of s2
+M = len(s2)
+
+# matrix = array of size [N+1, M+1], filled with zero's
+matrix = [[0 for i in range(M+1)] for j in range(N+1)]
+for row in matrix :
+    print(row)
+print("--------------")
+
+# initialize scores
+gap = -1
+mismatch = 0
+match = 1
+
+# STEP 1: Build Alignment Matrix
+
+# setup first column
+for i in range(1, N+1) :
+    matrix[i][0] = matrix[i-1][0] + gap
+
+# setup first row
+for j in range(1, M+1) :
+    matrix[0][j] = matrix[0][j - 1] + gap
+
+# calculate scores and fill matrix
+for i in range(1, N+1):
+    for j in range(1, M+1):
+        # diagonal match or mismatch
+        if s1[i-1] == s2[j-1]:
+            score1 = matrix[i-1][j-1] + match
+        else:
+            score1 = matrix[i-1][j-1] + mismatch
+        score2 = matrix[i][j-1] + gap # left
+        score3 = matrix[i-1][j] + gap # top
+        matrix[i][j] = max(score1, score2, score3)
+
+print("Alignment Matrix")
+for i in range(N+1) :
+    for j in range(M+1) :
+        # {:>3} right-align text in width 3, end="" stay on same line
+        print(" {:>3} ".format(str(matrix[i][j])), end="")
+    print() # newline
+print("--------------")
+
+# STEP 2: Create Directional Strings
+
+dstring = buildDirectionalString(matrix, N, M)
+
+print("The directional string is ", dstring)
+print("---------------")
+
+# STEP 3: Build Alignments Using Directional Strings
+
+seq1pos= N-1 # position of last character in seq s1
+seq2pos= M-1 # position of last character in seq s2
+dirPos = 0
+
+alignment1 = ""
+alignment2 = ""
+matchLine = ""
+
+while dirPos < len(dstring):
+    if dstring[dirPos] == "D":
+        alignment1 += s1[seq1pos]
+        alignment2 += s2[seq2pos]
+        matchLine += "|"
+        seq1pos -= 1
+        seq2pos -= 1
+    elif dstring[dirPos] == "V":
+        alignment1 += s1[seq1pos]
+        alignment2 += "-"
+        matchLine += "-"
+        seq1pos -= 1
+    else: # otherwise must be an H
+        alignment1 += "-"
+        alignment2 += s2[seq2pos]
+        matchLine += "-"
+        seq2pos -= 1
+    dirPos += 1
+
+# print alignment in reverse direction as dirPos backtracks
+print(alignment1[::-1])
+print(matchLine[::-1])
+print(alignment2[::-1])
+
+# STEP 4: Compute percent identity and percent gap
+percentIdentity = (matchLine.count('|') / len(matchLine)) * 100
+percentGap = (matchLine.count('-') / len(matchLine)) * 100
+
+print("---------------")
+print(f"The percent identity is {percentIdentity:.2f}%")
+print(f"The percent gap is {percentGap:.2f}%")
