@@ -45,15 +45,30 @@ print("What is the A/T proportion in the Homo-Sapiens gene?", round((seq2_count[
 
 ### QUESTION 4
 def count_cxt(sequence):
-    cat_count = sequence.count("CAT")
-    cct_count = sequence.count("CCT")
-    cgt_count = sequence.count("CGT")
-    cxt_count = len(re.findall(r'C[AGCT]T', sequence))
+    cat_count = 0
+    cct_count = 0
+    cgt_count = 0
+    cxt_count = 0
+
+    for i in range(0, len(sequence) - 2, 3): #ensure doesnt include last 2 nucleotides as an incomplete codon
+        codon = sequence[i:i + 3]
+        if codon == "CAT":
+            cat_count += 1
+            cxt_count += 1
+        elif codon == "CCT":
+            cct_count += 1
+            cxt_count += 1
+        elif codon == "CGT":
+            cgt_count += 1
+            cxt_count += 1
+        elif codon == "CTT":
+            cxt_count += 1
+
     print("CAT: ", cat_count)
     print("CCT: ", cct_count)
     print("CGT: ", cgt_count)
     print("CXT: ", cxt_count)
-    return cat_count, cct_count, cgt_count, cct_count
+    return cat_count, cct_count, cgt_count, cxt_count
 
 print("\nQuestion 4")
 print("Report the number of CAT, CCT, CGT, CCT, and CxT codons in the sequence.")
