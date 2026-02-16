@@ -165,17 +165,31 @@ def mode_aa_count_codon(sequence, protein):
     aa = mode_aa(protein) #get mode aa
 
     # list codons that can translate to mode aa
-    codons = []
+    mode_codons = []
     for key, value in codontab.items():
         if value == aa:
-            codons.append(key)
-    # print(codons) #to check
-    unique_codons = set()
-    for i in range(0, len(sequence) - 2, 3):
-        codon = sequence[i:i + 3]
-        if codon in codons:
-            unique_codons.add(codon)
-    return len(unique_codons)
+            mode_codons.append(key)
+    #print(mode_codons) #to check
+
+    mode_codons_count = [0] * len(mode_codons)
+    k = 0
+    for i in mode_codons:
+        for j in range(0, len(sequence) - 2, 3):
+            codon = sequence[j:j + 3]
+            if codon == mode_codons[k]:
+                mode_codons_count[k] += 1
+        k += 1
+    return mode_codons, mode_codons_count
 
 print("What is the most common amino acid in the translated amino acid chain?", mode_aa(seq2_protein))
-print("How many of each unique codon contribute to the most common amino acid?", mode_aa_count_codon(seq2, seq2_protein))
+
+print("How many of each unique codon contribute to the most common amino acid?")
+unique_codons, unique_codons_count = mode_aa_count_codon(seq2, seq2_protein)
+
+# replacing Ts with Us
+for i in range(0, len(unique_codons)):
+    unique_codons[i] = unique_codons[i].replace('T','U')
+
+# print answer
+for i in range(0, len(unique_codons)):
+    print(unique_codons[i],": ", unique_codons_count[i])
