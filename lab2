@@ -40,8 +40,8 @@ seq2_count = count_nucleotides(seq2)
 
 ### QUESTION 3
 print("\nQuestion 3")
-print("What is the A/T proportion in the Plasmodium Falciparum gene?", round(seq1_count[0]/seq1_count[3], 2))
-print("What is the A/T proportion in the Homo-Sapiens gene?", round(seq2_count[0]/seq2_count[3],2))
+print("What is the A/T proportion in the Plasmodium Falciparum gene?", round((seq1_count[0]+seq1_count[3])/len(seq1), 2))
+print("What is the A/T proportion in the Homo-Sapiens gene?", round((seq2_count[0]+seq2_count[3])/len(seq2),2))
 
 ### QUESTION 4
 def count_cxt(sequence):
