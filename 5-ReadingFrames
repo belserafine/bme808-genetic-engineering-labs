@@ -1,0 +1,165 @@
+# BME808 Lab 5
+# Belinda Serafine
+# search ### to go between questions
+
+# read file and take sequence
+f_seq = f"/Users/belindaserafine/Documents/School/BME808/Lab5/AF516335.txt"
+
+def takesequence(f):
+    with open(f, "r") as file: # open the file and read it
+        seq = ""
+        content = file.read() # read entire file into content
+        lines = content.split("\n") # split file contents by line
+        lines = lines[1:]
+        for line in lines:
+            seq += line
+        return seq
+
+seq = takesequence(f_seq)
+
+### QUESTION 1
+print("QUESTION 1")
+
+# function to find a pattern within a search text
+def find_pattern(pattern, search_text, start_loc, stop_loc, increment, threshold):
+    pattern_len = len(pattern)
+    text_len = len(search_text)
+
+    # from start loc to stop loc (and allow space for length of pattern)
+    # increment shifts starting index of the reading frame
+    for i in range(start_loc, stop_loc - pattern_len + 1, increment):
+        count = 0
+        j = i
+
+        # count number of matching characters at this location i
+        for k in range(0, pattern_len):
+            if search_text[j] == pattern[k]:
+                count += 1
+            j += 1
+
+        # check if the number of matched characters is enough
+        if count >= threshold:
+            return i # return location of pattern in search text
+
+    return -1 # pattern not found
+
+first_atg_idx = find_pattern("ATG", seq, 0, len(seq), 1,3)
+print("Index of the first ATG is:", first_atg_idx)
+
+### QUESTION 2
+# use first_atg_idx as a startloc to look for stop codon
+# stop codon = TAG, TGA, TAA
+# ORF must be at least 99 nucleotides, otherwise reject
+# if long enough, print position of start and stop codons
+# must find all ORFs that are long enuf
+# when ORF is long enough, continue search after stop codon
+# when ORF is too short, continue search after start codon to avoid overlapping ORFs
+
+print("\nQUESTION 2")
+
+i = 0
+count_orfs = 0
+SHORTEST = 99
+
+while i < len(seq):
+    # find ATG from current position i
+    atg = find_pattern("ATG", seq, i, len(seq), 1,3)
+
+    # exit loop if no more ATGs or ORFs in the seq
+    if atg == -1:
+        break
+
+    # find index of stop codon after current ATG
+    tag = find_pattern("TAG", seq, atg+3, len(seq), 3,3)
+    tga = find_pattern("TGA", seq, atg+3, len(seq), 3, 3)
+    taa = find_pattern("TAA", seq, atg+3, len(seq), 3, 3)
+
+    stop_candidates = [tag, tga, taa]
+
+    # remove candidates if stop codon not found
+    for j in stop_candidates[:]:
+        if j == -1:
+            stop_candidates.remove(j)
+
+    # if none of the candidates were found, then set stop as -1
+    if not stop_candidates:
+        stop = -1
+    else:
+        stop = min(stop_candidates)
+
+    orf_length = stop - atg
+
+    # add 1 to ORF count if current orf is of sufficient length
+    if orf_length >= SHORTEST:
+        count_orfs += 1
+        print("ORF#", count_orfs,"ATG =", atg, "STOP =", stop)
+
+        # shift by a codon after stop to look for next ORF after this ORF
+        i = stop + 3
+
+    # if length not met, shift by a codon after current start codon to look for next ORF
+    else:
+        i = atg + 3
+
+
+### QUESTION 3
+# below is an updated copy of script for QUESTION 2
+# when finds a candidate ORF, look for AGGAGG prior to ATG, with separation of 3 to 7 bp, allow 1 mismatch
+
+print("\nQUESTION 3")
+
+i = 0
+count_orfs = 0
+SHORTEST = 99
+shine_text = "AGGAGG"
+
+while i < len(seq):
+    # find ATG from current position i
+    atg = find_pattern("ATG", seq, i, len(seq), 1,3)
+
+    # exit loop if no more ATGs or ORFs in the seq
+    if atg == -1:
+        break
+
+    # find index of stop codon after current ATG
+    tag = find_pattern("TAG", seq, atg+3, len(seq), 3,3)
+    tga = find_pattern("TGA", seq, atg+3, len(seq), 3, 3)
+    taa = find_pattern("TAA", seq, atg+3, len(seq), 3, 3)
+
+    stop_candidates = [tag, tga, taa]
+
+    # remove candidates if stop codon not found
+    for j in stop_candidates[:]:
+        if j == -1:
+            stop_candidates.remove(j)
+
+    # if none of the candidates were found, then set stop as -1
+    if not stop_candidates:
+        stop = -1
+    else:
+        stop = min(stop_candidates)
+
+    orf_length = stop - atg
+
+    # if length is sufficient
+    if orf_length >= SHORTEST:
+
+        # look for shine
+        shine = find_pattern(shine_text, seq, atg-7-len(shine_text), atg-3+1, 1, len(shine_text)-1)
+
+        # if shine is not found, continue to next index
+        if shine == -1:
+            i = atg + 3
+            continue
+
+        # if shine is found, count as an ORF and print info
+        elif shine != -1:
+            count_orfs += 1
+            print("ORF#", count_orfs, "SHINE =", shine, "ATG =", atg, "STOP =", stop, "LENGTH =", orf_length)
+
+        # shift by a codon after stop to look for next ORF after this ORF
+        i = stop + 3
+
+    # if length not met, shift by a codon after current start codon to look for next ORF
+    else:
+        i = atg + 3
