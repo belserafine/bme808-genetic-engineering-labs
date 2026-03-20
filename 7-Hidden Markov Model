@@ -1,0 +1,159 @@
+# BME808 Lab 7
+# Belinda Serafine
+
+states = [0, 1] # fair, loaded
+state_names = ["Fair", "Loaded"]
+initial = [0.5, 0.5] # fair, loaded
+emission = [
+    [1/6,  1/6,  1/6,  1/6,  1/6,  1/6], # given fair state
+    [1/10, 1/10, 1/10, 1/10, 1/10, 1/2]  # given loaded state
+]
+emission = [list(row) for row in zip(*emission)] # transpose
+transition = [
+    [0.99, 0.01], # FF, FL
+    [0.20, 0.80]  # LF, LL
+]
+
+eseq1 = [2, 5, 3]
+eseq2 = [2,2,2,2,2,2,2,5,5,5,5,5]
+
+def q1(eseq):
+
+    # storage
+    pmax = 0.0
+    sseq = []
+
+    # nested for loop to create all 8 possible state sequences
+    for s0 in states:
+        for s1 in states:
+            for s2 in states:
+                curr_state_seq = [s0, s1, s2]
+
+                # compute probability for current state seq
+                probability = (
+                        initial[s0] * emission[eseq[0]][s0] *
+                        transition[s0][s1] * emission[eseq[1]][s1] *
+                        transition[s1][s2] * emission[eseq[2]][s2]
+                )
+
+                # find maximum probability and corresponding seq
+                if probability > pmax:
+                    pmax = probability
+                    sseq = curr_state_seq
+
+    sseq = [state_names[s] for s in sseq]
+
+    print('The most likely sequence to generate [2,5,3] is', sseq,
+          'which has probability', round(pmax,5))
+
+def q2(eseq):
+
+    # storage
+    pmax = 0.0
+    sseq = []
+
+    # nested for loop to create all 2^12 = 14 possible state sequences
+    for s0 in states:
+        for s1 in states:
+            for s2 in states:
+                for s3 in states:
+                    for s4 in states:
+                        for s5 in states:
+                            for s6 in states:
+                                for s7 in states:
+                                    for s8 in states:
+                                        for s9 in states:
+                                            for s10 in states:
+                                                for s11 in states:
+                                                    curr_state_seq = [s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11]
+
+                                                    # compute probability for current state seq
+                                                    probability = (
+                                                            initial[s0] * emission[eseq[0]][s0] *
+                                                            transition[s0][s1] * emission[eseq[1]][s1] *
+                                                            transition[s1][s2] * emission[eseq[2]][s2] *
+                                                            transition[s2][s3] * emission[eseq[3]][s3] *
+                                                            transition[s3][s4] * emission[eseq[4]][s4] *
+                                                            transition[s4][s5] * emission[eseq[5]][s5] *
+                                                            transition[s5][s6] * emission[eseq[6]][s6] *
+                                                            transition[s6][s7] * emission[eseq[7]][s7] *
+                                                            transition[s7][s8] * emission[eseq[8]][s8] *
+                                                            transition[s8][s9] * emission[eseq[9]][s9] *
+                                                            transition[s9][s10] * emission[eseq[10]][s10] *
+                                                            transition[s10][s11] * emission[eseq[11]][s11]
+                                                    )
+
+                                                    # find maximum probability and corresponding seq
+                                                    if probability > pmax:
+                                                        pmax = probability
+                                                        sseq = curr_state_seq
+
+    sseq = [state_names[s] for s in sseq]
+
+    print('The most likely sequence is', sseq,
+          'which has probability', pmax)
+
+def q3(eseq):
+
+    M = 2 # states
+    N = len(eseq)
+
+    # initialize viterbi matrix
+    viterbi = [[0 for j in range(N)] for i in range(M)]
+
+    # initialize backtracking matrix
+    back = [[0 for j in range(N)] for i in range(M)]
+
+    # set first column
+    for i in range(M):
+        viterbi[i][0] = initial[i] * emission[eseq[0]][i]
+
+    # set remaining columns
+    for j in range(1, N): # skip 0
+        for i in range(M):
+            max_t = -1
+            best_k = 0
+
+            # find max transition and keep track of pointer
+            for k in range(M):
+                curr_t = viterbi[k][j-1] * transition[k][i]
+                if curr_t > max_t:
+                    max_t = curr_t
+                    best_k = k
+
+            viterbi[i][j] = emission[eseq[j]][i] * max_t
+            back[i][j] = best_k
+
+    # find best final state and prob
+    best_last_state = 0
+    best_last_prob = 0
+
+    for i in range(M):
+        if viterbi[i][N-1] > best_last_prob:
+            best_last_prob = viterbi[i][N-1]
+            best_last_state = i
+
+    # backtrack
+    path = [0 for _ in range(N)] # initialize path array
+    path[N-1] = best_last_state # set last state
+
+    for j in range(N-1, 0, -1): # iterate backward
+        # starting at last state in path
+        path[j-1] = back[path[j]][j]
+
+    ''' only used to check
+    print("Viterbi matrix:")
+    for row in viterbi:
+        print(row)
+
+    print("Backpointer matrix:")
+    for row in back:
+        print(row)
+    '''
+
+    named_path = [state_names[s] for s in path]
+
+    print("Most likely state sequence:", named_path, f"with probability {best_last_prob:.3e}.")
+
+if __name__ == "__main__":
+    q3(eseq1)
