@@ -1,0 +1,154 @@
+# BME808 Lab 6
+# Belinda Serafine
+# search ### to go between questions
+
+# function to print sequence length, overall gc content, cpg dimers, overall cpg ratio
+# optionally returns cpg ratio array for win_size
+def get_cpg_data(seq, win_size = 0):
+    # length of sequence
+    len_seq = len(seq)
+
+    # overall GC content
+    seq_GC = (seq.count('G') + seq.count('C')) / len_seq
+
+    # number of CpG dimers
+    seq_cpg_dimers= seq.count('CG')
+
+    # overall CpG ratio for entire sequence
+    seq_cpg_ratio = (seq.count('CG') * len_seq) / (seq.count('C') * seq.count('G'))
+
+    # print information
+    print('length of sequence =', len_seq,
+          '\nOverall GC content =', round(seq_GC, 3),
+          '\nNumber of CpG Dimers =', seq_cpg_dimers,
+          '\nOverall CpG ratio for the entire sequence =', round(seq_cpg_ratio, 3))
+
+    if win_size == 0:
+        return 0
+
+    else:
+        # initialize window size and cpg ratios array
+        seq_cpg_ratios = [0] * (len_seq - win_size + 1)
+
+        # computing cpg ratios for each window
+        for i in range(0, len_seq - win_size + 1): # slide window until end of sequence
+            curr_window = seq[i : i + win_size] # looking at nucleotides in current window
+
+            # if no G or C is present, cpg ratio is 0
+            if curr_window.count('G') == 0 or curr_window.count('C') == 0:
+                seq_cpg_ratios[i] = 0.0
+                continue
+
+            # otherwise, compute cpg ratio and assign to array
+            else:
+                curr_cpg_ratio = (curr_window.count('CG') * win_size) / (curr_window.count('G') * curr_window.count('C'))
+                seq_cpg_ratios[i] = round(curr_cpg_ratio,3)
+
+        # return ratio array
+        return seq_cpg_ratios
+
+### PART 1
+print('PART 1')
+
+seq1 = 'AAAACGCGGG'
+
+### 1.1
+print('1.1')
+seq1_cpg_ratios = get_cpg_data(seq1, 4)
+print('CpG ratio for each sliding window = ', seq1_cpg_ratios)
+
+### PART 2
+print('\nPART 2')
+
+# read file and take sequence
+f_seq2 = f"/Users/belindaserafine/Documents/School/BME808/Lab6/sequence.txt"
+
+def takesequence(f):
+    with open(f, "r") as file: # open the file and read it
+        seq = ""
+        content = file.read() # read entire file into content
+        lines = content.split("\n") # split file contents by line
+        lines = lines[1:]
+        for line in lines:
+            seq += line
+        return seq
+
+seq2 = takesequence(f_seq2)
+
+### 2.1
+print('2.1')
+seq2_cpg_ratios = get_cpg_data(seq2, 100)
+
+### 2.2
+seq2_max_cpg_ratio = max(seq2_cpg_ratios)
+print('\n2.2 What is the maximum CpG ratio?', seq2_max_cpg_ratio)
+
+### 2.3
+# initialize cpg min threshold and count variable
+min_cpg = 0.65
+ratio_count = 0
+
+for i in range(0, len(seq2_cpg_ratios)):
+    if seq2_cpg_ratios[i] >= min_cpg:
+        ratio_count += 1
+
+print('\n2.3 How many of the ratios have ratios[i] >= min_CpG, where min_CpG = 0.65?', ratio_count)
+
+### PART 3
+
+### 3.1
+# initialize variables and storages
+candidate_count = 0
+max_count = 0
+longest_len = 0
+longest_cpg = [0, 0]
+
+# go through cpg ratio array
+for i in range(0, len(seq2_cpg_ratios)):
+    # if current cpg ratio meets threshold, add do candidate count
+    if seq2_cpg_ratios[i] >= min_cpg:
+        candidate_count += 1
+
+    # if current cpg ratio does not meet threshold
+    if seq2_cpg_ratios[i] < min_cpg:
+
+        # and if the current count is larger than max count
+        # update variables
+        if candidate_count > max_count:
+            max_count = candidate_count
+            longest_cpg = [i - 1 - max_count, i - 1]
+            longest_len = max_count
+
+        # reset candidate count
+        candidate_count = 0
+
+print('\n3.1 The longest candidate CpG island runs from position', longest_cpg[0], 'to', longest_cpg[1], 'with length', longest_len)
+
+### 3.2 & 3.3
+# extract sequence where longest cpg island is located
+longest_cpg_seq = seq2[longest_cpg[0] : longest_cpg[1]]
+print('\n3.2 and 3.3')
+get_cpg_data(longest_cpg_seq, 0)
+
+# check condition: whether GC content in the window are >= 0.55
+def check_window_gc_content(seq, win_size):
+    # length of sequence
+    len_seq = len(seq)
+
+    # computing GC content for each window
+    for i in range(0, len_seq - win_size + 1): # slide window until end of sequence
+        # looking at nucleotides in current window
+        curr_window = seq[i : i + win_size]
+
+        # compute GC content in current window
+        curr_GC = (curr_window.count('G') + curr_window.count('C')) / win_size
+        # print(curr_GC) # used to check GC content, last one is 0.54
+
+        # if current GC content does not meet threshold, then condition is not met
+        if curr_GC < 0.55:
+            return "No"
+
+    # if all GC contents meet threshold, then condition is met
+    return "Yes"
+
+print("\nDoes it meet condition (1)?", check_window_gc_content(longest_cpg_seq,100))
